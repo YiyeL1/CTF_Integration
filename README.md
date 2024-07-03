@@ -12,7 +12,7 @@ The script will automatically initialize the configuration when it is executed f
 
 ```
 sudo apt install git -y
-git clone https://github.com/huangzheng2016/CTFd-docker CTFd
+git clone https://github.com/expiol/CTF_Integration.git CTFd
 vi CTFd/docker-compose.yml
 #Modify CTFD_URL, DIRECT_URL, DYNAMIC_URL, and resolve on the DNS server
 sudo sh CTFd/install.sh
