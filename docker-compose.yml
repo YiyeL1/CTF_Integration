@@ -1,0 +1,102 @@
+version: '3.7'
+services:
+  ctfd:
+    build: .
+    user: root
+    restart: always
+    #ports:
+    #  - "8000:8000"
+    environment:
+      - UPLOAD_FOLDER=/var/uploads
+      - DATABASE_URL=mysql+pymysql://ctfd:ctfd@db/ctfd
+      - REDIS_URL=redis://cache:6379
+      - WORKERS=1
+      - LOG_FOLDER=/var/log/CTFd
+      - PROBLEM_DOCKER_RUN_FOLDER=/tmp
+      - ACCESS_LOG=-
+      - ERROR_LOG=-
+      - REVERSE_PROXY=true
+      - CTFD_URL=ctfd.hongy.online
+      - DIRECT_URL=direct.hongy.online
+      - DYNAMIC_URL=dynamic.hongy.online
+    volumes:
+      - .data/CTFd/logs:/var/log/CTFd
+      - .data/CTFd/uploads:/var/uploads
+      - .:/opt/CTFd
+      #- .:/opt/CTFd:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - db
+    networks:
+        default:
+        internal:
+
+  nginx:
+    image: nginx:stable
+    restart: always
+    volumes:
+      - ./conf/nginx/http.conf:/etc/nginx/nginx.conf
+    ports:
+      - 80:80
+    depends_on:
+      - ctfd
+      - frps
+    networks:
+        default:
+        internal:
+
+  db:
+    image: mariadb:10.4.12
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=ctfd
+      - MYSQL_USER=ctfd
+      - MYSQL_PASSWORD=ctfd
+      - MYSQL_DATABASE=ctfd
+    volumes:
+      - .data/mysql:/var/lib/mysql
+    networks:
+        internal:
+
+    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --wait_timeout=28800, --log-warnings=0]
+
+  cache:
+    image: redis:4
+    restart: always
+    volumes:
+    - .data/redis:/data
+    networks:
+        internal:
+
+  frpc:
+    image: snowdreamtech/frpc:0.41.0
+    restart: always
+    volumes:
+      - ./frpc:/etc/frp/
+    networks:
+      frp:
+      internal:
+      containers:
+
+  frps:
+    image: snowdreamtech/frps:0.41.0
+    restart: always
+    volumes:
+      - ./frps:/etc/frp/
+    ports:
+      - 8009:8009
+      - 10001-10200:10001-10200
+    networks:
+      frp:
+      default:
+
+networks:
+    default:
+    internal:
+        internal: true
+    frp:
+        internal: true
+    containers:
+        internal: true
+        driver: overlay
+        attachable: true
