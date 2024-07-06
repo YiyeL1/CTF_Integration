@@ -25,6 +25,8 @@ services:
       - .:/opt/CTFd
       #- .:/opt/CTFd:ro
       - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker
+      - /usr/local/bin/docker-compose:/usr/local/bin/docker-compose
     depends_on:
       - db
     networks:
@@ -57,14 +59,13 @@ services:
       - .data/mysql:/var/lib/mysql
     networks:
         internal:
-
     command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --wait_timeout=28800, --log-warnings=0]
 
   cache:
     image: redis:4
     restart: always
     volumes:
-    - .data/redis:/data
+      - .data/redis:/data
     networks:
         internal:
 
